@@ -9,31 +9,42 @@ function timeAgo(iso: string) {
 }
 
 function NewsCard({ item, index }: { item: NewsItem; index: number }) {
+  const isClickable = item.url && item.url !== '#'
+  const Tag = isClickable ? 'a' : 'div'
+  const linkProps = isClickable
+    ? { href: item.url, target: '_blank', rel: 'noopener noreferrer' }
+    : {}
+
   return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block bg-slate-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-600 transition-all hover:bg-slate-800/60"
+    <Tag
+      {...linkProps}
+      className={`group block bg-white border border-gray-200 rounded-2xl p-5 shadow-sm transition-all ${
+        isClickable ? 'hover:border-blue-300 hover:shadow-md cursor-pointer' : ''
+      }`}
     >
       <div className="flex items-start gap-4">
-        <span className="text-2xl font-bold text-slate-700 w-8 shrink-0 mt-0.5">
+        <span className="text-2xl font-bold text-gray-200 w-8 shrink-0 mt-0.5">
           {String(index + 1).padStart(2, '0')}
         </span>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-slate-100 group-hover:text-blue-400 transition-colors leading-snug mb-2">
+          <h3 className={`font-semibold text-gray-900 leading-snug mb-2 ${isClickable ? 'group-hover:text-blue-600' : ''} transition-colors`}>
             {item.title}
           </h3>
           {item.description && (
-            <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-3">
+            <p className="text-gray-500 text-sm leading-relaxed line-clamp-2 mb-3">
               {item.description}
             </p>
           )}
-          <div className="flex items-center gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-3 text-xs text-gray-400">
             {item.source && (
-              <span className="bg-slate-800 px-2 py-0.5 rounded-full">{item.source}</span>
+              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{item.source}</span>
             )}
             <span>{timeAgo(item.publishedAt)}</span>
+            {isClickable && (
+              <span className="ml-auto text-blue-500 group-hover:text-blue-600 font-medium">
+                Read more →
+              </span>
+            )}
           </div>
         </div>
         {item.image && (
@@ -44,7 +55,7 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           />
         )}
       </div>
-    </a>
+    </Tag>
   )
 }
 
@@ -61,13 +72,13 @@ export default function NewsFeed({
     return (
       <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 animate-pulse">
+          <div key={i} className="bg-white border border-gray-200 rounded-2xl p-5 animate-pulse shadow-sm">
             <div className="flex gap-4">
-              <div className="w-8 h-6 bg-slate-800 rounded" />
+              <div className="w-8 h-6 bg-gray-100 rounded" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-slate-800 rounded w-3/4" />
-                <div className="h-3 bg-slate-800 rounded w-full" />
-                <div className="h-3 bg-slate-800 rounded w-1/2" />
+                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-full" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
               </div>
             </div>
           </div>
@@ -78,7 +89,7 @@ export default function NewsFeed({
 
   if (error) {
     return (
-      <div className="text-center py-12 text-slate-400">
+      <div className="text-center py-12 text-gray-400">
         <p className="text-lg mb-2">Couldn't load live news</p>
         <p className="text-sm">{error}</p>
       </div>
@@ -87,7 +98,7 @@ export default function NewsFeed({
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-400">
+      <div className="text-center py-12 text-gray-400">
         No articles found. Try different keywords.
       </div>
     )

@@ -2,6 +2,7 @@ export interface UserPrefs {
   keywords: string[]
   timezone: string
   pushTime: string
+  email?: string
 }
 
 export interface NewsItem {
@@ -11,4 +12,14 @@ export interface NewsItem {
   image?: string
   publishedAt: string
   source?: string
+}
+
+export interface ScheduledTask {
+  id: string
+  keywords: string[]
+  timezone: string
+  pushTime: string
+  email: string
+  createdAt: string
+  active: boolean
 }
