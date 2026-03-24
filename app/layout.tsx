@@ -1,18 +1,17 @@
+import type { Metadata } from 'next'
 import './globals.css'
 
-export const metadata = {
-  title: 'My AI News',
-  description: 'Personalized news aggregator',
+export const metadata: Metadata = {
+  title: 'My AI News — Personalized News, Your Way',
+  description: 'Get AI-curated news tailored to your interests, delivered on your schedule.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased">
+        {children}
+      </body>
     </html>
   )
 }
