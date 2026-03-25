@@ -35,6 +35,8 @@ export default function SetupPanel({ onSave }: { onSave: (p: UserPrefs) => void 
   const [email, setEmail] = useState('')
   const [sendTest, setSendTest] = useState(false)
   const [testSent, setTestSent] = useState(false)
+  const [testLoading, setTestLoading] = useState(false)
+  const [testError, setTestError] = useState('')
 
   function toggleTag(value: string) {
     setSelected(s => s.includes(value) ? s.filter(v => v !== value) : [...s, value])
@@ -48,11 +50,29 @@ export default function SetupPanel({ onSave }: { onSave: (p: UserPrefs) => void 
     }
   }
 
-  function handleSendTest() {
+  async function handleSendTest() {
     if (!email.trim()) return
-    // Simulate sending test email
-    setTestSent(true)
-    setTimeout(() => setTestSent(false), 3000)
+    setTestLoading(true)
+    setTestError('')
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          keywords: selected.length > 0 ? selected : ['AI'],
+          pushTime,
+          timezone,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      setTestSent(true)
+      setTimeout(() => setTestSent(false), 4000)
+    } catch {
+      setTestError('Failed to send. Check your email and try again.')
+    } finally {
+      setTestLoading(false)
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -175,15 +195,19 @@ export default function SetupPanel({ onSave }: { onSave: (p: UserPrefs) => void 
               <button
                 type="button"
                 onClick={handleSendTest}
+                disabled={testLoading}
                 className={`text-xs px-3 py-1 rounded-full transition-all ${
                   testSent
                     ? 'bg-green-100 text-green-700'
+                    : testLoading
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                 }`}
               >
-                {testSent ? '✓ Sent!' : 'Send test →'}
+                {testSent ? '✓ Sent!' : testLoading ? 'Sending...' : 'Send test →'}
               </button>
             )}
+            {testError && <p className="text-xs text-red-500 mt-1">{testError}</p>}
           </div>
         )}
       </div>
