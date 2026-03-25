@@ -19,24 +19,14 @@ export default function Home() {
     setLoading(true)
     setView('feed')
     try {
-      const q = p.keywords.join(' OR ')
       const res = await fetch(
-        `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=en&max=10&apikey=demo`
+        `/api/news?keywords=${encodeURIComponent(p.keywords.join(','))}`
       )
       if (!res.ok) throw new Error('Failed to fetch news')
       const data = await res.json()
-      setNews(
-        (data.articles || []).map((a: any) => ({
-          title: a.title,
-          description: a.description,
-          url: a.url,
-          image: a.image,
-          publishedAt: a.publishedAt,
-          source: a.source?.name,
-        }))
-      )
+      setNews(data.articles || [])
     } catch {
-      setNews(getMockNews(p.keywords))
+      setNews([])
     } finally {
       setLoading(false)
     }
@@ -66,7 +56,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm px-6 py-3 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
           <button
@@ -153,45 +142,4 @@ export default function Home() {
       </footer>
     </div>
   )
-}
-
-function getMockNews(keywords: string[]): NewsItem[] {
-  const topic = keywords[0] || 'AI'
-  return [
-    {
-      title: `${topic}: Major Breakthrough Announced by Leading Researchers`,
-      description: `Scientists have made a significant advancement in ${topic.toLowerCase()} that could reshape the industry within the next few years.`,
-      url: 'https://techcrunch.com',
-      publishedAt: new Date().toISOString(),
-      source: 'Tech Review',
-    },
-    {
-      title: `How ${topic} Is Changing the Way We Work`,
-      description: `A deep dive into the practical applications of ${topic.toLowerCase()} across industries, from healthcare to finance.`,
-      url: 'https://wired.com',
-      publishedAt: new Date(Date.now() - 3600000).toISOString(),
-      source: 'Future Forward',
-    },
-    {
-      title: `Top 10 ${topic} Tools You Should Know in 2026`,
-      description: `We reviewed dozens of tools and narrowed it down to the ones that actually make a difference.`,
-      url: 'https://producthunt.com',
-      publishedAt: new Date(Date.now() - 7200000).toISOString(),
-      source: 'Product Hunt Daily',
-    },
-    {
-      title: `${topic} Investment Hits Record High This Quarter`,
-      description: `Venture capital funding in the ${topic.toLowerCase()} space surged to an all-time high, signaling strong market confidence.`,
-      url: 'https://bloomberg.com',
-      publishedAt: new Date(Date.now() - 10800000).toISOString(),
-      source: 'Bloomberg Tech',
-    },
-    {
-      title: `The Ethics of ${topic}: What Experts Are Saying`,
-      description: `As ${topic.toLowerCase()} becomes more pervasive, ethicists and policymakers are calling for clearer guidelines.`,
-      url: 'https://technologyreview.com',
-      publishedAt: new Date(Date.now() - 14400000).toISOString(),
-      source: 'MIT Technology Review',
-    },
-  ]
 }

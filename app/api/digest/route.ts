@@ -4,23 +4,15 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function fetchNews(keywords: string[]): Promise<{ title: string; description: string; url: string; source: string }[]> {
-  const q = keywords.join(' OR ')
   try {
     const res = await fetch(
-      `https://gnews.io/api/v4/search?q=${encodeURIComponent(q)}&lang=en&max=5&apikey=${process.env.GNEWS_API_KEY || 'demo'}`
+      `${process.env.NEXT_PUBLIC_BASE_URL || 'https://myainews.club'}/api/news?keywords=${encodeURIComponent(keywords.join(','))}`
     )
-    if (!res.ok) throw new Error('gnews failed')
+    if (!res.ok) throw new Error('news api failed')
     const data = await res.json()
-    return (data.articles || []).map((a: any) => ({
-      title: a.title,
-      description: a.description || '',
-      url: a.url,
-      source: a.source?.name || '',
-    }))
+    return data.articles || []
   } catch {
-    return keywords.slice(0, 1).map(topic => ([
-      { title: `${topic}: Top Stories Today`, description: `Latest developments in ${topic}`, url: 'https://news.google.com', source: 'Google News' },
-    ])).flat()
+    return []
   }
 }
 
