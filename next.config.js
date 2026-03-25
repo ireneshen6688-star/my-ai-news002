@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Changed from 'export' for API routes
+  output: 'export',
   images: {
     unoptimized: true,
   },

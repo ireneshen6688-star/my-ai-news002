@@ -1,26 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server'
-
+// Cloudflare Pages Function: /api/news
 // Real RSS feeds by topic
-const TOPIC_FEEDS: Record<string, string[]> = {
+
+const TOPIC_FEEDS = {
   'artificial intelligence': [
-    'https://feeds.feedburner.com/venturebeat/SZYF',
     'https://techcrunch.com/category/artificial-intelligence/feed/',
+    'https://feeds.feedburner.com/venturebeat/SZYF',
   ],
   'technology': [
     'https://feeds.feedburner.com/TechCrunch',
     'https://www.wired.com/feed/rss',
   ],
   'finance': [
-    'https://feeds.bloomberg.com/markets/news.rss',
     'https://www.cnbc.com/id/10000664/device/rss/rss.html',
+    'https://feeds.bloomberg.com/markets/news.rss',
   ],
   'science': [
     'https://www.sciencedaily.com/rss/all.xml',
-    'https://feeds.nature.com/nature/rss/current',
   ],
   'health': [
     'https://rss.medicalnewstoday.com/featurednews.xml',
-    'https://www.who.int/rss-feeds/news-english.xml',
   ],
   'world news': [
     'https://feeds.bbci.co.uk/news/world/rss.xml',
@@ -28,19 +26,15 @@ const TOPIC_FEEDS: Record<string, string[]> = {
   ],
   'startups': [
     'https://techcrunch.com/category/startups/feed/',
-    'https://feeds.feedburner.com/venturebeat/SZYF',
   ],
   'gaming': [
     'https://www.ign.com/articles.rss',
-    'https://kotaku.com/rss',
   ],
   'climate': [
     'https://www.theguardian.com/environment/climate-crisis/rss',
-    'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml',
   ],
   'crypto': [
     'https://cointelegraph.com/rss',
-    'https://coindesk.com/arc/outboundfeeds/rss/',
   ],
 }
 
@@ -49,26 +43,17 @@ const DEFAULT_FEEDS = [
   'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
 ]
 
-interface NewsItem {
-  title: string
-  description: string
-  url: string
-  source: string
-  publishedAt: string
-  image?: string
-}
-
-async function fetchRSS(url: string): Promise<NewsItem[]> {
+async function fetchRSS(url) {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MyAINews/1.0)' },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     })
     if (!res.ok) return []
     const xml = await res.text()
 
-    const items: NewsItem[] = []
-    const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g)
+    const items = []
+    const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
 
     for (const match of itemMatches) {
       const item = match[1]
@@ -78,11 +63,9 @@ async function fetchRSS(url: string): Promise<NewsItem[]> {
       const desc = item.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/)?.[1]
         ?.replace(/<[^>]+>/g, '')?.trim()?.slice(0, 200)
       const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1]?.trim()
-        || item.match(/<dc:date>(.*?)<\/dc:date>/)?.[1]?.trim()
       const image = item.match(/<media:thumbnail[^>]+url="([^"]+)"/)?.[1]
         || item.match(/<enclosure[^>]+url="([^"]+)"/)?.[1]
 
-      // Extract source name from feed URL
       const sourceName = new URL(url).hostname.replace('www.', '').replace('feeds.', '').split('.')[0]
 
       if (title && link) {
@@ -103,13 +86,12 @@ async function fetchRSS(url: string): Promise<NewsItem[]> {
   }
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const keywordsParam = searchParams.get('keywords') || 'technology'
+export async function onRequestGet({ request }) {
+  const url = new URL(request.url)
+  const keywordsParam = url.searchParams.get('keywords') || 'technology'
   const keywords = keywordsParam.split(',').map(k => k.trim().toLowerCase())
 
-  // Collect relevant feeds
-  const feedUrls = new Set<string>()
+  const feedUrls = new Set()
   for (const kw of keywords) {
     const feeds = TOPIC_FEEDS[kw] || []
     feeds.forEach(f => feedUrls.add(f))
@@ -118,16 +100,15 @@ export async function GET(req: NextRequest) {
     DEFAULT_FEEDS.forEach(f => feedUrls.add(f))
   }
 
-  // Fetch all feeds in parallel (max 4 feeds)
-  const feedList = Array.from(feedUrls).slice(0, 4)
+  const feedList = [...feedUrls].slice(0, 4)
   const results = await Promise.all(feedList.map(fetchRSS))
   let articles = results.flat()
 
-  // Sort by date, newest first
-  articles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+  // Sort newest first
+  articles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
 
-  // Deduplicate by title
-  const seen = new Set<string>()
+  // Deduplicate
+  const seen = new Set()
   articles = articles.filter(a => {
     const key = a.title.slice(0, 50)
     if (seen.has(key)) return false
@@ -135,5 +116,10 @@ export async function GET(req: NextRequest) {
     return true
   })
 
-  return NextResponse.json({ articles: articles.slice(0, 10) })
+  return new Response(JSON.stringify({ articles: articles.slice(0, 10) }), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+  })
 }
