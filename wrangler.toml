@@ -1,13 +1,7 @@
 name = "myainews"
 compatibility_date = "2024-01-01"
-pages_build_output_dir = ".vercel/output/static"
+pages_build_output_dir = "out"
 
 [[kv_namespaces]]
 binding = "SUBSCRIPTIONS"
 id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
-
-[vars]
-CRON_SECRET = "REPLACE_WITH_A_RANDOM_SECRET"
-
-[[triggers]]
-crons = ["0 * * * *"]
